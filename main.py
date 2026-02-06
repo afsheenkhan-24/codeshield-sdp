@@ -1,6 +1,8 @@
-from parser import read_file
+from parser import read_file, calculate_complexity
 
 filepath = "test.py"
 
-content = parser.read_file(filepath)
+content = read_file(filepath)
+M = calculate_complexity(content)
 print(content)
+print(f"Complexity Score = {M}")
