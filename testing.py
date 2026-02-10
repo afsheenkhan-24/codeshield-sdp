@@ -1,5 +1,5 @@
 import unittest
-from parser import calculate_complexity
+from analysis import calculate_complexity
 
 class TestComplexity(unittest.TestCase):
 
