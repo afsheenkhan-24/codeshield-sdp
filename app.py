@@ -1,9 +1,10 @@
 from dashboard import Dashboard
+from settings import Settings
 import streamlit as st
 from analysis import calculate_complexity
 
 def Complexity():
-    st.title("CodeShield: A Code Analysis and Security Tool")
+    st.title("Code Analysis and Security Tool")
 
     tab1, tab2 = st.tabs(["Upload", "Paste Code"]) 
 
@@ -23,6 +24,6 @@ def Complexity():
         st.button("Run Analysis", type="primary", on_click=calculate_complexity, args=(code_input,))
         st.write("Complexity Score: " + str(calculate_complexity(code_input)), ) 
 
-pg = st.navigation([Dashboard, Complexity])
+pg = st.navigation([Dashboard, Complexity, Settings])
 pg.run()
 
