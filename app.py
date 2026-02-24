@@ -1,7 +1,7 @@
 from pages.dashboard import Dashboard
 from pages.settings import Settings
 import streamlit as st
-from pages.analysis import calculate_complexity
+import pages.analysis
 
 def Complexity():
     st.title("Code Analysis and Security Tool")
@@ -36,9 +36,10 @@ def Complexity():
         else:
             tdi = 0
             tdi_label = "Critical"
-            cc = calculate_complexity(st.session_state.file_content)
-            nodes, edges = 0, 0
-            vd = 0
+            nodes_and_edges = pages.analysis.calculate_nodes_and_edges(st.session_state.file_content)
+            cc = pages.analysis.calculate_complexity(nodes_and_edges)
+            nodes, edges = nodes_and_edges[0], nodes_and_edges[1]
+            vd = 0 
             red_flags = 0
 
             col1, col2, col3 = st.columns(3)
