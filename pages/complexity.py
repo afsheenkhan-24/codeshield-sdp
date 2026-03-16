@@ -1,11 +1,18 @@
 import ast
 
 def count_loc(code: str) -> int:
-    """Non-blank, non-comment lines."""
-    return max(
-        sum(1 for l in code.splitlines() if l.strip() and not l.strip().startswith("#")),
-        1,
-    )
+    if not code or not code.strip():
+        return 0
+        
+    lines = code.splitlines()
+    count = 0
+    for line in lines:
+        cleaned = line.strip()
+        # Skip empty lines and skip lines starting with #
+        if cleaned and not cleaned.startswith("#"):
+            count += 1
+            
+    return count
 
 def calculate_complexity(nodes, edges):
     if nodes == 0:
@@ -47,10 +54,6 @@ def calculate_nodes_and_edges(code):
 
     visitor = MetricVisitor()
     visitor.visit(tree)
-    
-    print(f"--- Metrics Calculated ---")
-    print(f"Nodes: {visitor.nodes}")
-    print(f"Edges: {visitor.edges}")
     
     return visitor.nodes, visitor.edges
 
