@@ -42,7 +42,7 @@ No setup needed – upload your Python file and explore the technical debt and s
 ### Project layout
 
 ```text
-codeshield-sdp/
+Codeshield-SDP/
 ├── app.py            # Main Streamlit application
 ├── pages/            # Additional Streamlit pages (navigation, views)
 ├── utils/            # Analysis logic, DB utilities, helpers
