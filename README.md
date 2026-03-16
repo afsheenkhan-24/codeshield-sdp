@@ -5,10 +5,10 @@
 ![Streamlit](https://img.shields.io/badge/Streamlit-%23FF6B35.svg?&logo=streamlit&logoColor=white)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL3-yellow.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-**CodeShield-SDP** is an AI‑assisted web application built with Streamlit that scans Python code for technical debt metrics (e.g., cyclomatic complexity via AST parsing) and security vulnerabilities. Upload code, visualize metrics, and get actionable insights to improve code quality and security.[page:1]
+**CodeShield-SDP** is an AI‑assisted web application built with Streamlit that scans Python code for technical debt metrics (e.g., cyclomatic complexity via AST parsing) and security vulnerabilities. Upload code, visualize metrics, and get actionable insights to improve code quality and security.
 
 > ⚠️ This project is a **work in progress (WIP)**.  
-> Features, UI, and analysis logic may change frequently as I iterate on the scanner and underlying models.[page:1]
+> Features, UI, and analysis logic may change frequently as I iterate on the scanner and underlying models.
 
 ---
 
@@ -18,26 +18,26 @@ You can try CodeShield-SDP online here:
 
 👉 **[Open the live app](https://codeshield-tech-solutions.streamlit.app/)**
 
-No setup needed – upload your Python file and explore the technical debt and security insights directly in the browser.[page:1]
+No setup needed – upload your Python file and explore the technical debt and security insights directly in the browser.
 
 ---
 
 ## ✨ Key Features
 
-- **Code analysis via AST** – Parses Python Abstract Syntax Trees to calculate nodes, edges, and complexity scores for technical debt metrics.[page:1]
-- **Security scanning** – Detects common issues such as hardcoded secrets or unsafe patterns (with room to add more rules over time).[page:1]
-- **Interactive dashboard** – Streamlit UI to upload files, display metrics, and visualize results.[page:1]
-- **Database integration** – Uses a backend database (e.g., Supabase/Postgres) to store scan metadata and results for further analysis.[page:1]
-- **Deployment ready** – Contains `app.py`, `pages/`, `utils/`, and `requirements.txt` for local or cloud deployment.[page:1]
+- **Code analysis via AST** – Parses Python Abstract Syntax Trees to calculate nodes, edges, and complexity scores for technical debt metrics.
+- **Security scanning** – Detects common issues such as hardcoded secrets or unsafe patterns (with room to add more rules over time).
+- **Interactive dashboard** – Streamlit UI to upload files, display metrics, and visualize results.
+- **Database integration** – Uses a backend database (e.g., Supabase/Postgres) to store scan metadata and results for further analysis.
+- **Deployment ready** – Contains `app.py`, `pages/`, `utils/`, and `requirements.txt` for local or cloud deployment.
 
 ---
 
 ## 🧱 Tech Stack & Structure
 
-- **Frontend / Backend:** Streamlit (`app.py`, `pages/`).[page:1]
-- **Language:** Python.[page:1]
-- **Analysis logic:** Custom utilities for AST‑based metrics and security checks in `utils/`.[page:1]
-- **Database:** Integration layer in `utils/` for inserting and querying scan data (e.g., with Supabase/Postgres).[page:1]
+- **Frontend / Backend:** Streamlit (`app.py`, `pages/`).
+- **Language:** Python.
+- **Analysis logic:** Custom utilities for AST‑based metrics and security checks in `utils/`.
+- **Database:** Integration layer in `utils/` for inserting and querying scan data (e.g., with Supabase/Postgres).
 
 ### Project layout
 
