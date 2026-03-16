@@ -1,47 +1,56 @@
 # CodeShield-SDP: Technical Debt and Security Scanner
 
-[![Python](https://img.shields.io/badge/Python-100%25-blue)](https://www.python.org/)
-[![Streamlit](https://img.shields.io/badge/Streamlit-%23FF6B35.svg?&logo=streamlit&logoColor=white)](https://streamlit.io/)
+![Status](https://img.shields.io/badge/status-WIP-orange)
+![Python](https://img.shields.io/badge/Python-100%25-blue)
+![Streamlit](https://img.shields.io/badge/Streamlit-%23FF6B35.svg?&logo=streamlit&logoColor=white)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL3-yellow.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-**CodeShield-SDP** is a web application built with Streamlit that scans Python code for technical debt metrics (e.g., cyclomatic complexity via AST parsing) and security vulnerabilities. Upload code, visualize graphs of nodes/edges, and get actionable insights.
+**CodeShield-SDP** is an AI‑assisted web application built with Streamlit that scans Python code for technical debt metrics (e.g., cyclomatic complexity via AST parsing) and security vulnerabilities. Upload code, visualize metrics, and get actionable insights to improve code quality and security.[page:1]
+
+> ⚠️ This project is a **work in progress (WIP)**.  
+> Features, UI, and analysis logic may change frequently as I iterate on the scanner and underlying models.[page:1]
+
+---
 
 ## 🌐 Live Demo
 
 You can try CodeShield-SDP online here:
 
-👉 [Open the live app] https://codeshield-tech-solutions.streamlit.app/
+👉 **[Open the live app](https://codeshield-tech-solutions.streamlit.app/)**
 
-No setup needed – upload your Python file and explore the technical debt and security insights in the browser.
+No setup needed – upload your Python file and explore the technical debt and security insights directly in the browser.[page:1]
 
-## ✨ Click for Details
+---
 
-### <details>
+## ✨ Key Features
 
-<summary>🛠️ Key Features</summary>
+- **Code analysis via AST** – Parses Python Abstract Syntax Trees to calculate nodes, edges, and complexity scores for technical debt metrics.[page:1]
+- **Security scanning** – Detects common issues such as hardcoded secrets or unsafe patterns (with room to add more rules over time).[page:1]
+- **Interactive dashboard** – Streamlit UI to upload files, display metrics, and visualize results.[page:1]
+- **Database integration** – Uses a backend database (e.g., Supabase/Postgres) to store scan metadata and results for further analysis.[page:1]
+- **Deployment ready** – Contains `app.py`, `pages/`, `utils/`, and `requirements.txt` for local or cloud deployment.[page:1]
 
-- **Code Analysis**: Parses Python AST to calculate nodes, edges, and complexity scores for technical debt.
-- **Security Scanning**: Detects common vulnerabilities like hardcoded secrets or unsafe practices.
-- **Interactive Dashboard**: Streamlit UI with graphs and Supabase-backed storage for results.
-- **Deployment Ready**: Includes `app.py`, requirements, and utils for easy local or cloud setup.
+---
 
-</details>
+## 🧱 Tech Stack & Structure
 
-### <details>
+- **Frontend / Backend:** Streamlit (`app.py`, `pages/`).[page:1]
+- **Language:** Python.[page:1]
+- **Analysis logic:** Custom utilities for AST‑based metrics and security checks in `utils/`.[page:1]
+- **Database:** Integration layer in `utils/` for inserting and querying scan data (e.g., with Supabase/Postgres).[page:1]
 
-<summary>📁 Tech Stack & Structure</summary>
+### Project layout
 
-- **Frontend/Backend**: Streamlit (`app.py`, `pages/`).
-- **Utils**: Code parsing (`utils/` with AST module), Supabase client integration.
-- **Key Files**:
-  | File | Purpose |
-  |------|---------|
-  | `app.py` | Main Streamlit app |
-  | `testing.py` | Testing scripts |
-  | `requirements.txt` | Dependencies (e.g., streamlit, supabase) |
-  | `utils/` | Analysis logic |
-
-</details>
+```text
+codeshield-sdp/
+├── app.py            # Main Streamlit application
+├── pages/            # Additional Streamlit pages (navigation, views)
+├── utils/            # Analysis logic, DB utilities, helpers
+├── testing.py        # Testing / experimentation scripts
+├── requirements.txt  # Python dependencies
+├── .gitignore
+├── LICENSE
+└── README.md
 
 ### <details>
 
@@ -77,3 +86,4 @@ Fork, PRs welcome! Focus on adding more vuln detectors or ML-based debt scoring.
 GPL-3.0 [LICENSE](LICENSE)
 
 **Stars and feedback appreciated! ⭐**
+```
