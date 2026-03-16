@@ -1,8 +1,9 @@
 import streamlit as st
 from pages.dashboard import Dashboard
 from pages.settings import Settings
-from pages.complexity import calculate_complexity, calculate_nodes_and_edges
+from pages.complexity import calculate_complexity, calculate_nodes_and_edges, count_loc
 from pages.rules import SecurityConcerns
+from utils.supabase_client import insert_code
 
 st.set_page_config(
     page_title="CodeShield",
@@ -34,12 +35,15 @@ def Complexity():
 
     # ---- Upload tab ----
     with tab_upload:
-        code_type = "file"
         code_title = st.text_input("Enter a title for your code", key="code_title")
         uploaded_file = st.file_uploader("Choose a .py file", type=[".py"])
+
         if uploaded_file is not None:
             st.session_state.uploaded_file = uploaded_file
-            st.session_state.file_content = uploaded_file.read().decode("utf-8")
+            file_bytes = uploaded_file.getvalue()
+            file_text = file_bytes.decode("utf-8")
+            st.session_state.file_content = file_text
+
             st.text_area(
                 "File Preview",
                 value=st.session_state.file_content,
@@ -48,17 +52,26 @@ def Complexity():
             )
 
             if st.button("Run Analysis", key="run_upload"):
-                if st.session_state.file_content:
+                if file_text:
                     scanner = SecurityConcerns()
+                    # run rules etc. as you already do...
+
+                    loc = count_loc(file_text)
+                    insert_code(
+                        code_title=code_title or "Untitled file",
+                        code_type="File Upload",
+                        loc=loc,
+                        code_file_bytes=file_bytes,
+                        pasted_code_text=None,
+                    )
+
                     st.session_state.analysis_done = True
                     st.success("Analysis complete! Go to the Result tab.")
                 else:
                     st.warning("Please upload a file first.")
 
-
     # ---- Paste Code tab ----
     with tab_paste:
-        code_type = "text"
         code_paste_title = st.text_input("Enter a title for your code", key="code_paste_title")
         code_input = st.text_area("Paste Python code here", height=200, key="code_input")
         
@@ -66,10 +79,21 @@ def Complexity():
             if code_input.strip():
                 st.session_state.file_content = code_input
                 st.session_state.uploaded_file = None
+
+                loc = count_loc(code_input)
+                insert_code(
+                    code_title=code_paste_title or "Untitled paste",
+                    code_type="Pasted Code",
+                    loc=loc,
+                    code_file_bytes=None,
+                    pasted_code_text=code_input,
+                )
+
                 st.session_state.analysis_done = True
                 st.success("Analysis complete! Go to the Result tab.")
             else:
                 st.warning("Please paste some code first.")
+
     
     # ---- Result tab ----
     with tab_result:
