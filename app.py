@@ -12,7 +12,7 @@ st.set_page_config(
 )
 
 def Complexity():
-    st.title("Code Analysis and Security Tool")
+    st.header("Code Analysis and Security Tool")
 
 
     # Initialise session state
@@ -54,7 +54,6 @@ def Complexity():
             if st.button("Run Analysis", key="run_upload"):
                 if file_text:
                     scanner = SecurityConcerns()
-                    # run rules etc. as you already do...
 
                     loc = count_loc(file_text)
                     insert_code(
