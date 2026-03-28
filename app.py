@@ -3,7 +3,9 @@ from pages.dashboard import Dashboard
 from pages.settings import Settings
 from pages.complexity import calculate_complexity, calculate_nodes_and_edges, count_loc
 from pages.rules import SecurityConcerns
-from utils.supabase_client import insert_code
+from utils.supabase_client import insert_code, insert_result, insert_complexity, insert_flag, insert_rule
+from auth import run_auth, sign_out
+import requests
 import os
 
 st.set_page_config(
@@ -12,31 +14,170 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-LOGO_PATH = "Tech solutions logo.png"
+# ---- Logo ----
+LOGO_PATH = "Tech_solutions_logo.png"
 if os.path.exists(LOGO_PATH):
-    st.logo(LOGO_PATH, size='large')
+    st.logo(LOGO_PATH)
 
+'''# ── Auth gate — stop here if not logged in ────────────────────────────────────
+if not run_auth():
+    st.stop()
+
+# ── Logout button in sidebar ──────────────────────────────────────────────────
+with st.sidebar:
+    user = st.session_state.get("user")
+    if user:
+        email = user.email or ""
+        name = st.session_state.get("profile", {}).get("full_name", email)
+        st.caption(f"Signed in as **{name}**")
+        if st.button("Sign out"):
+            sign_out()'''
+
+
+# ---- LLM (Ollama) ----
+def get_llm_recommendations(code: str, findings: list, tdi: float) -> str:
+    if not findings and tdi < 25:
+        return "No significant issues found. Code looks clean."
+ 
+    findings_summary = "\n".join(
+        f"- Line {f['line_number']}: {f['rule_title']} — {f['description']}"
+        for f in findings
+    )
+ 
+    prompt = f"""You are a senior software security engineer reviewing a Python code scan.
+ 
+TDI Score: {tdi:.2f} (threshold for high risk: 50)
+Security findings:
+{findings_summary}
+ 
+Give 3-5 concise, actionable recommendations to fix the issues above.
+Be specific. Reference line numbers where relevant. Keep it under 200 words."""
+ 
+    try:
+        response = requests.post(
+            "http://localhost:11434/api/generate",
+            json={
+                "model": "llama3.2:3b",
+                "prompt": prompt,
+                "stream": False,
+            },
+            timeout=30,
+        )
+        if response.status_code == 200:
+            return response.json().get("response", "No response from model.")
+        return f"Ollama returned status {response.status_code}."
+    except requests.exceptions.ConnectionError:
+        return (
+            "Ollama is not running locally. Start it with `ollama serve` "
+            "and make sure the `llama3` model is pulled (`ollama pull llama3`)."
+        )
+    except Exception as e:
+        return f"LLM error: {e}"
+
+
+# ---- Analysis pipeline ----
+def run_analysis(code: str, uploaded_file=None) -> dict:
+    scanner = SecurityConcerns()
+    findings = scanner.run_all_rules(code, uploaded_file)
+
+    loc = count_loc(code)
+    nodes, edges = calculate_nodes_and_edges(code)
+    cc = calculate_complexity(nodes, edges)
+
+    red_flags = len(findings)
+    vd = (red_flags / loc) * 1000 if loc > 0 else 0
+    tdi = (cc * 0.5) + (vd * 0.5)
+
+    if tdi >= 50:
+        risk = "High Risk"
+        needs_refactoring = True
+    elif tdi >= 25:
+        risk = "Medium Risk"
+        needs_refactoring = False
+    else:
+        risk = "Low Risk"
+        needs_refactoring = False
+
+    return {
+        "loc": loc,
+        "nodes": nodes,
+        "edges": edges,
+        "cc": cc,
+        "vd": vd,
+        "tdi": tdi,
+        "risk": risk,
+        "needs_refactoring": needs_refactoring,
+        "findings": findings,
+    }
+
+
+def save_to_supabase(code_title: str, code_type: str, analysis: dict, file_bytes: bytes = None, pasted_text: str = None):
+    """All five table inserts after a completed analysis."""
+
+    # 1. Codes
+    code_id = insert_code(
+        code_title=code_title,
+        code_type=code_type,
+        loc=analysis["loc"],
+        code_file_bytes=file_bytes,
+        pasted_code_text=pasted_text,
+    )
+    if code_id is None:
+        st.error("Failed to save code record — aborting further saves.")
+        return
+
+    # 2. Results
+    result_id = insert_result(
+        code_id=code_id,
+        complexity_score=analysis["cc"],
+        vulnerability_density=analysis["vd"],
+        tdi_score=analysis["tdi"],
+        risk_classification=analysis["risk"],
+        needs_refactoring=analysis["needs_refactoring"],
+    )
+    if result_id is None:
+        st.error("Failed to save result record — aborting further saves.")
+        return
+
+    # 3. Complexities
+    insert_complexity(
+        result_id=result_id,
+        edges=analysis["edges"],
+        nodes=analysis["nodes"],
+        connected_components=1,
+        decision_points=analysis["nodes"],
+    )
+
+    # 4. Rules + Flags
+    for finding in analysis["findings"]:
+        rule_id = insert_rule(
+            rule_name=finding["rule_title"],
+            rule_descr=finding["justification"],
+        )
+        if rule_id:
+            insert_flag(
+                result_id=result_id,
+                rule_id=rule_id,
+                line_number=finding.get("line_number", 0),
+            )
+
+
+# ---- Complexity page ----
 def Complexity():
     st.header("Code Analysis and Security Tool")
 
+    # Session state initialisation
+    for key, default in [
+        ("analysis_done", False),
+        ("file_content", ""),
+        ("uploaded_file", None),
+        ("analysis_result", None),
+        ("llm_response", None),
+    ]:
+        if key not in st.session_state:
+            st.session_state[key] = default
 
-    # Initialise session state
-    if "analysis_done" not in st.session_state:
-        st.session_state.analysis_done = False
-
-    if "file_content" not in st.session_state:
-        st.session_state.file_content = ""
-
-    if "uploaded_file" not in st.session_state:
-        st.session_state.uploaded_file = None
-
-    if "scanner" not in st.session_state:
-        st.session_state.scanner = SecurityConcerns()
-
-
-    # Tabs for Upload, Paste Code, and Result
-    tab_upload, tab_paste, tab_result = st.tabs(["Upload", "Paste Code", "Result"]) 
-
+    tab_upload, tab_paste, tab_result = st.tabs(["Upload", "Paste Code", "Result"])
 
     # ---- Upload tab ----
     with tab_upload:
@@ -48,116 +189,112 @@ def Complexity():
             file_bytes = uploaded_file.getvalue()
             file_text = file_bytes.decode("utf-8")
             st.session_state.file_content = file_text
-
-            st.text_area(
-                "File Preview",
-                value=st.session_state.file_content,
-                height=200,
-                disabled=True,
-            )
+            st.text_area("File preview", value=file_text, height=200, disabled=True)
 
             if st.button("Run Analysis", key="run_upload"):
                 if file_text:
-                    scanner = SecurityConcerns()
-
-                    loc = count_loc(file_text)
-                    insert_code(
-                        code_title=code_title or "Untitled file",
-                        code_type="File Upload",
-                        loc=loc,
-                        code_file_bytes=file_bytes,
-                        pasted_code_text=None,
-                    )
-
-                    st.session_state.analysis_done = True
+                    with st.spinner("Analysing..."):
+                        result = run_analysis(file_text, uploaded_file)
+                        save_to_supabase(
+                            code_title=code_title or "Untitled file",
+                            code_type="File Upload",
+                            analysis=result,
+                            file_bytes=file_bytes,
+                        )
+                        st.session_state.analysis_result = result
+                        st.session_state.analysis_done = True
+                        st.session_state.llm_response = None  # reset previous
                     st.success("Analysis complete! Go to the Result tab.")
                 else:
                     st.warning("Please upload a file first.")
 
-    # ---- Paste Code tab ----
+    # ---- Paste tab ----
     with tab_paste:
         code_paste_title = st.text_input("Enter a title for your code", key="code_paste_title")
         code_input = st.text_area("Paste Python code here", height=200, key="code_input")
-        
+
         if st.button("Run Analysis", key="run_paste"):
             if code_input.strip():
-                st.session_state.file_content = code_input
-                st.session_state.uploaded_file = None
-
-                loc = count_loc(code_input)
-                insert_code(
-                    code_title=code_paste_title or "Untitled paste",
-                    code_type="Pasted Code",
-                    loc=loc,
-                    code_file_bytes=None,
-                    pasted_code_text=code_input,
-                )
-
-                st.session_state.analysis_done = True
+                with st.spinner("Analysing..."):
+                    result = run_analysis(code_input)
+                    save_to_supabase(
+                        code_title=code_paste_title or "Untitled paste",
+                        code_type="Pasted Code",
+                        analysis=result,
+                        pasted_text=code_input,
+                    )
+                    st.session_state.file_content = code_input
+                    st.session_state.uploaded_file = None
+                    st.session_state.analysis_result = result
+                    st.session_state.analysis_done = True
+                    st.session_state.llm_response = None
                 st.success("Analysis complete! Go to the Result tab.")
             else:
                 st.warning("Please paste some code first.")
 
-    
     # ---- Result tab ----
     with tab_result:
-        if not st.session_state.analysis_done:
-            st.info("No analysis data available."
-                "Please upload or paste code in the previous tabs first."
+        if not st.session_state.analysis_done or st.session_state.analysis_result is None:
+            st.info("No analysis yet. Upload or paste code first.")
+            return
+
+        r = st.session_state.analysis_result
+
+        if r["tdi"] >= 50:
+            st.error(
+                f"HIGH RISK — TDI score of {r['tdi']:.2f} exceeds the threshold of 50. "
+                "Immediate refactoring is recommended."
             )
+        elif r["tdi"] >= 25:
+            st.warning(f"MEDIUM RISK — TDI score of {r['tdi']:.2f}.")
         else:
-            code = st.session_state.file_content
-            scanner = st.session_state.scanner
+            st.success(f"LOW RISK — TDI score of {r['tdi']:.2f}.")
 
-            # Run security rules
-            results = scanner.run_all_rules(
-                code,
-                st.session_state.uploaded_file,
-            )
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Technical Debt Index (TDI)", f"{r['tdi']:.2f}")
+            st.caption(f"Risk: {r['risk']}")
+        with col2:
+            st.metric("Cyclomatic Complexity", r["cc"])
+            st.write(f"Nodes (N): {r['nodes']}")
+            st.write(f"Edges (E): {r['edges']}")
+        with col3:
+            st.metric("Vulnerability Density", f"{r['vd']:.2f}")
+            st.write(f"Red flags found: {len(r['findings'])}")
+            st.write(f"Lines of code: {r['loc']}")
 
-            # LOC (non-empty, non-comment)
-            LOC = sum(
-                1
-                for line in code.splitlines()
-                if line.strip() and not line.strip().startswith("#")
-            )
-    
-            # Nodes, edges, cyclomatic complexity
-            nodes, edges = calculate_nodes_and_edges(code)
-            cc = calculate_complexity(nodes, edges)
+        st.markdown("---")
 
-            # Vulnerability density
-            red_flags = len(results)
-            vd = (red_flags / LOC) * 1000 if LOC > 0 else 0
+        st.subheader("Security red flags")
+        if r["findings"]:
+            severity_label = {1: "Low", 2: "High", 3: "Critical"}
+            for finding in r["findings"]:
+                with st.container(border=True):
+                    col_a, col_b = st.columns([4, 1])
+                    col_a.markdown(f"**{finding['rule_title']}** — `{finding['rule']}`")
+                    col_b.markdown(severity_label.get(finding["severity"], ""))
+                    st.write(finding["description"])
+                    st.caption(f"Why this matters: {finding['justification']}")
+        else:
+            st.success("No security vulnerabilities identified.")
 
-            # Technical depth index
-            tdi = (cc + vd) / 2
+        st.markdown("---")
 
-            # Show metrics
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Technical Depth Index (TDI)", f"{tdi:.2f}")
-            with col2:
-                st.metric("Cyclomatic Complexity", cc)
-                st.write(f"Nodes (N): {nodes}")
-                st.write(f"Edges (E): {edges}")
-            with col3:
-                st.metric("Vulnerability Density", f"{vd:.2f}")
-                st.write(f"Number of Red Flags: {red_flags}")
+        # LLM recommendations via Ollama
+        st.subheader("AI recommendations")
+ 
+        if st.button("Generate AI recommendations"):
+            with st.spinner("Asking LLM..."):
+                llm_response = get_llm_recommendations(
+                    st.session_state.file_content,
+                    r["findings"],
+                    r["tdi"],
+                )
+                st.session_state.llm_response = llm_response
+ 
+        if st.session_state.llm_response:
+            st.info(st.session_state.llm_response)
 
-            st.markdown("---")
-
-            st.subheader("Identified Security Red Flags")
-            if red_flags > 0:
-                for report in results:
-                    st.write(f"**{report['rule_title']}**")
-                    st.write(report["description"])
-                    st.write("---")
-            else:
-                st.write("No security vulnerabilities identified.")
-
-            if st.button("Generate Report"):
-                pass
 
 pg = st.navigation([Dashboard, Complexity, Settings])
 pg.run()
