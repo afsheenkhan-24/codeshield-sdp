@@ -2,7 +2,7 @@ import streamlit as st
 from pages.dashboard import Dashboard
 from pages.settings import Settings
 from pages.complexity import calculate_complexity, calculate_nodes_and_edges, count_loc
-from pages.rules import SecurityConcerns
+from pages.rules import *
 from utils.supabase_client import insert_code, insert_result, insert_complexity, insert_flag, insert_rule
 from auth import run_auth, sign_out
 import requests
@@ -75,8 +75,20 @@ Be specific. Reference line numbers where relevant. Keep it under 200 words."""
 # ---- Analysis pipeline ----
 def run_analysis(code: str, uploaded_file=None) -> dict:
 
-    scanner = SecurityConcerns()
-    findings = scanner.run_all_rules(code, uploaded_file)
+    raw_findings = []
+
+    if 'rule_1' in globals(): raw_findings.extend(rule_1(code, uploaded_file))
+    if 'rule_2' in globals(): raw_findings.extend(rule_2(code, uploaded_file))
+    if 'rule_3' in globals(): raw_findings.extend(rule_3(code, uploaded_file))
+    if 'rule_4' in globals(): raw_findings.extend(rule_4(code, uploaded_file))
+    if 'rule_5' in globals(): raw_findings.extend(rule_5(code, uploaded_file))
+    if 'rule_6' in globals(): raw_findings.extend(rule_6(code, uploaded_file))
+
+    findings = []
+    for f in raw_findings:
+        f["line_number"] = f.get("line", 0)
+        f["rule_title"] = f.get("rule", "Security Alert")
+        findings.append(f)
 
     loc = count_loc(code)
     nodes, edges = calculate_nodes_and_edges(code)

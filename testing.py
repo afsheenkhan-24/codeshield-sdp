@@ -1,24 +1,51 @@
-import unittest
-from pages.complexity import calculate_complexity
+import os
+import sqlite3
+import hashlib
+import subprocess
+import pickle
 
-class TestComplexity(unittest.TestCase):
 
-    def test_script_1(self):
-        code = "print('Hello')"
-        self.assertEqual(calculate_complexity(code), 1)
+# --- INSECURE CONFIGURATIONS (Rule 6) ---
+DEBUG = True
+admin_pass = "123456"
+db_user = 'root'  # Also triggers Rule 4 (Least Privilege)
+secure = False
+external_api = "http://insecure-api.example.com/v1/data"
 
-    def test_armstrong_logic(self):
-        code = """
-                while n > 0:
-                    n //= 10
-                if total == num:
-                    print('Match')
-"""
-        self.assertEqual(calculate_complexity(code), 3)
+def process_user_data(user_input, serialized_payload):
+    # --- UNSAFE INPUT HANDLING (Rule 5) ---
+    
+    # 1. Arbitrary Code Execution
+    calculated_value = eval(user_input)
+    
+    # 2. OS Command Injection
+    subprocess.Popen(f"echo {user_input}", shell=True)
+    
+    # 3. Unsafe OS Execution
+    os.system("ping -c 4 " + user_input)
+    
+    # 4. Unsafe Deserialization
+    data_object = pickle.loads(serialized_payload)
+    
+    return calculated_value, data_object
 
-    def test_high_complexity(self):
-        code = "if 1>2: \n if 2>3: \n if 3>4: \n while True:"
-        self.assertEqual(calculate_complexity(code), 5)
+def authenticate_user(username, password):
+    # --- WEAK CRYPTOGRAPHY (Rule 3) ---
+    
+    # 1. Weak Hashing
+    password_hash = hashlib.md5(password.encode()).hexdigest()
+    
 
-if __name__ == "__main__":
-    unittest.main()
+    
+    # --- SQL INJECTION (Rule 4) ---
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+    
+    # F-string SQL Injection
+    query = f"SELECT * FROM users WHERE username = '{username}' AND password = '{password_hash}'"
+    cursor.execute(query)
+    
+    # Format string SQL Injection
+    cursor.execute("UPDATE users SET last_login = 'now' WHERE username = '{}'".format(username))
+    
+    return True
