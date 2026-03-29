@@ -19,11 +19,11 @@ LOGO_PATH = "Tech_solutions_logo.png"
 if os.path.exists(LOGO_PATH):
     st.logo(LOGO_PATH)
 
-'''# ── Auth gate — stop here if not logged in ────────────────────────────────────
+# ---- Auth gate — stop here if not logged in ----
 if not run_auth():
     st.stop()
 
-# ── Logout button in sidebar ──────────────────────────────────────────────────
+# ---- Logout button in sidebar ----
 with st.sidebar:
     user = st.session_state.get("user")
     if user:
@@ -31,7 +31,7 @@ with st.sidebar:
         name = st.session_state.get("profile", {}).get("full_name", email)
         st.caption(f"Signed in as **{name}**")
         if st.button("Sign out"):
-            sign_out()'''
+            sign_out()
 
 
 # ---- LLM (Ollama) ----
@@ -191,7 +191,7 @@ def Complexity():
             st.session_state.file_content = file_text
             st.text_area("File preview", value=file_text, height=200, disabled=True)
 
-            if st.button("Run Analysis", key="run_upload"):
+            if st.button("Run Analysis", key="run_upload", type='primary'):
                 if file_text:
                     with st.spinner("Analysing..."):
                         result = run_analysis(file_text, uploaded_file)
@@ -213,7 +213,7 @@ def Complexity():
         code_paste_title = st.text_input("Enter a title for your code", key="code_paste_title")
         code_input = st.text_area("Paste Python code here", height=200, key="code_input")
 
-        if st.button("Run Analysis", key="run_paste"):
+        if st.button("Run Analysis", key="run_paste", type='primary'):
             if code_input.strip():
                 with st.spinner("Analysing..."):
                     result = run_analysis(code_input)
@@ -283,7 +283,7 @@ def Complexity():
         # LLM recommendations via Ollama
         st.subheader("AI recommendations")
  
-        if st.button("Generate AI recommendations"):
+        if st.button("Generate AI recommendations", type='primary'):
             with st.spinner("Asking LLM..."):
                 llm_response = get_llm_recommendations(
                     st.session_state.file_content,
