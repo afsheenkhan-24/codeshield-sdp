@@ -54,18 +54,22 @@ Give 3-5 concise, actionable recommendations to fix the issues above.
 Be specific. Reference line numbers where relevant. Keep it under 200 words."""
  
     try:
-        api_key = st.secrets["GEMINI_API_KEY"]
+        api_key = st.secrets["GROQ_API_KEY"]
         response = requests.post(
-            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}",
-            headers={"Content-Type": "application/json"},
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
             json={
-                "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {"maxOutputTokens": 512},
+                "model": "llama-3.1-8b-instant",
+                "messages": [{"role": "user", "content": prompt}],
+                "max_tokens": 512,
             },
             timeout=30,
         )
         if response.status_code == 200:
-            return response.json()["candidates"][0]["content"]["parts"][0]["text"]
+            return response.json()["choices"][0]["message"]["content"]
         return f"API error {response.status_code}: {response.text}"
     except KeyError:
         return "API KEY not found."
