@@ -34,7 +34,7 @@ with st.sidebar:
             sign_out()
 
 
-# ---- LLM (Ollama) ----
+# ---- LLM (Gemini API) ----
 def get_llm_recommendations(code: str, findings: list, tdi: float) -> str:
     if not findings and tdi < 25:
         return "No significant issues found. Code looks clean."
@@ -54,29 +54,27 @@ Give 3-5 concise, actionable recommendations to fix the issues above.
 Be specific. Reference line numbers where relevant. Keep it under 200 words."""
  
     try:
+        api_key = st.secrets["GEMINI_API_KEY"]
         response = requests.post(
-            "http://localhost:11434/api/generate",
+            f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}",
+            headers={"Content-Type": "application/json"},
             json={
-                "model": "llama3.2:3b",
-                "prompt": prompt,
-                "stream": False,
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {"maxOutputTokens": 512},
             },
             timeout=30,
         )
         if response.status_code == 200:
-            return response.json().get("response", "No response from model.")
-        return f"Ollama returned status {response.status_code}."
-    except requests.exceptions.ConnectionError:
-        return (
-            "Ollama is not running locally. Start it with `ollama serve` "
-            "and make sure the `llama3` model is pulled (`ollama pull llama3`)."
-        )
+            return response.json()["candidates"][0]["content"]["parts"][0]["text"]
+        return f"API error {response.status_code}: {response.text}"
+    except KeyError:
+        return "API KEY not found."
     except Exception as e:
         return f"LLM error: {e}"
 
-
 # ---- Analysis pipeline ----
 def run_analysis(code: str, uploaded_file=None) -> dict:
+
     scanner = SecurityConcerns()
     findings = scanner.run_all_rules(code, uploaded_file)
 
