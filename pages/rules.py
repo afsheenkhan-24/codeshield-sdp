@@ -1,4 +1,5 @@
 import re
+
 class SecurityConcerns:
     def __init__(self):
         self.findings = []
