@@ -19,7 +19,7 @@ venv.bak/
 .env.*.local
 
 # Streamlit
-.streamlit/
+.streamlit/secrets.toml
 
 # OS / editor noise
 .vscode/
