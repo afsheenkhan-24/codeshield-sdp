@@ -1,6 +1,7 @@
 import streamlit as st
 from utils.supabase_client import get_supabase_client
 from datetime import datetime, timedelta, timezone
+import pandas as pd
 
 
 def get_dashboard_data():
@@ -157,7 +158,7 @@ def Dashboard():
         st.subheader("Scan type breakdown")
         type_counts = metrics["type_counts"]
         if type_counts:
-            import pandas as pd
+            
             df = pd.DataFrame(
                 {"Type": list(type_counts.keys()), "Count": list(type_counts.values())}
             ).set_index("Type")
