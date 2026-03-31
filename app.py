@@ -34,7 +34,7 @@ with st.sidebar:
             sign_out()
 
 
-# ---- LLM (Gemini API) ----
+# ---- LLM (Groq API) ----
 def get_llm_recommendations(code: str, findings: list, tdi: float) -> str:
     if not findings and tdi < 25:
         return "No significant issues found. Code looks clean."
@@ -105,7 +105,7 @@ def run_analysis(code: str, uploaded_file=None) -> dict:
     if tdi >= 50:
         risk = "High Risk"
         needs_refactoring = True
-    elif tdi >= 25:
+    elif tdi >= 25 and tdi < 50:
         risk = "Medium Risk"
         needs_refactoring = False
     else:
@@ -298,7 +298,7 @@ def Complexity():
 
         st.markdown("---")
 
-        # LLM recommendations via Ollama
+        # LLM recommendations via Groq API
         st.subheader("AI recommendations")
  
         if st.button("Generate AI recommendations", type='primary'):
