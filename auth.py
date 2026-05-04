@@ -10,8 +10,13 @@ def run_auth() -> bool:
 
     supabase = get_supabase_client()
 
-    st.title("CodeShield Tech Solutions")
-    st.caption("Technical Debt and Security Scanner")
+    
+    col1, col2 = st.columns([0.1, 0.9])
+    with col1:
+        st.image('logo.jpeg', width=200)
+    with col2:
+        st.title("CodeShield Tech Solutions")
+        st.caption("Technical Debt and Security Scanner")
     # st.markdown("---")
 
     tab_login, tab_register = st.tabs(["Login", "Register"])
