@@ -11,7 +11,7 @@ def run_auth() -> bool:
     supabase = get_supabase_client()
 
     
-    col1, col2 = st.columns([0.1, 0.9])
+    col1, col2 = st.columns([0.13, 0.87])
     with col1:
         st.image('logo.jpeg', width=200)
     with col2:
