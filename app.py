@@ -15,7 +15,7 @@ st.set_page_config(
 )
 
 # ---- Logo ----
-LOGO_PATH = "Tech_solutions_logo.png"
+LOGO_PATH = "logo.jpeg"
 if os.path.exists(LOGO_PATH):
     st.logo(LOGO_PATH)
 
